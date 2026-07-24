@@ -724,7 +724,7 @@ app.post('/api/checkout/cash', auth, async (req, res) => {
         const deliveryFee = Number(req.body.deliveryFee) || 0;
 
         const user = await User.findById(req.user._id);
-        if (user.isSuspended) return res.status(400).json({ message: 'حسابك موقوف' });
+        if (user.isSuspended) return res.status(400).json({ message: 'حساب موقوف' });
 
         const settings = await AppSettings.findOne();
         if(settings && !settings.isStoreEnabled) return res.status(400).json({ message: 'عذراً، المتجر متوقف مؤقتاً' });
