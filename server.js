@@ -86,7 +86,8 @@ const User = mongoose.model('User', new mongoose.Schema({
 
 const BankakLog = mongoose.model('BankakLog', new mongoose.Schema({ txnId: { type: String, unique: true }, amount: Number, date: { type: Date, default: Date.now }, isUsed: { type: Boolean, default: false } }));
 
-const Product = mongoose.model('Product', new mongoose.Schema({ catIdx: Number, categoryId: String, arName: String, enName: String, price: Number, minPrice: { type: Number, default: 0 }, vendorIdentity: { type: String, default: 'admin' }, vendorName: { type: String, default: 'بومة' }, stock: { type: Number, default: 0 }, img: String, gallery: { type: [String], default: [] }, arDesc: String, enDesc: String, variations: { type: [String], default: [] }, ratings: [{ rating: Number, clientIdentity: String }], date: { type: Date, default: Date.now } }));
+// 🌟 تم إضافة deliveryScope هنا 🌟
+const Product = mongoose.model('Product', new mongoose.Schema({ catIdx: Number, categoryId: String, arName: String, enName: String, price: Number, minPrice: { type: Number, default: 0 }, vendorIdentity: { type: String, default: 'admin' }, vendorName: { type: String, default: 'بومة' }, stock: { type: Number, default: 0 }, img: String, gallery: { type: [String], default: [] }, arDesc: String, enDesc: String, variations: { type: [String], default: [] }, deliveryScope: { type: String, default: 'جميع المناطق' }, ratings: [{ rating: Number, clientIdentity: String }], date: { type: Date, default: Date.now } }));
 
 const DeliveryZone = mongoose.model('DeliveryZone', new mongoose.Schema({ name: String, price: Number })); 
 const ServiceRequest = mongoose.model('ServiceRequest', new mongoose.Schema({ serviceName: String, projectName: String, description: String, clientIdentity: String, clientName: String, date: { type: Date, default: Date.now } }));
