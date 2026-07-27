@@ -43,10 +43,16 @@ const AppSettings = mongoose.model('AppSettings', new mongoose.Schema({
     decorationCustomUrl: { type: String, default: '' },
     isDecorationActive: { type: Boolean, default: false },
     adminPasswordHash: { type: String, default: '' },
-    supportPasswordHash: { type: String, default: '' }, // 🛡️ كلمة مرور الدعم الفني 
+    supportPasswordHash: { type: String, default: '' }, 
     adminEmail: { type: String, default: 'infoboma0@gmail.com' },
     termsText: { type: String, default: '' }, 
-    uiSettings: { type: Object, default: {} } 
+    // 🌟 تم إضافة القيم الافتراضية للبار العلوي هنا 🌟
+    uiSettings: { type: Object, default: {
+        appHeaderBgType: 'gradient',
+        appHeaderColor1: '#ff6e40',
+        appHeaderColor2: '#f25522',
+        appHeaderTextColor: '#ffffff'
+    }} 
 }));
 
 const Category = mongoose.model('Category', new mongoose.Schema({ arName: String, enName: String, icon: String }));
@@ -180,7 +186,6 @@ const courierAuth = async (req, res, next) => { await auth(req, res, async () =>
 // ==========================================
 // 🌟 4. مسارات التوثيق والـ OTP 🌟
 // ==========================================
-// ... (لا تغيير على مسارات تسجيل دخول واشتراك العملاء - نفس الأكواد السابقة)
 app.post('/api/auth/signup', async (req, res) => { 
     try { 
         const { fullName, identity, password, pin, termsAccepted } = req.body; 
@@ -237,11 +242,11 @@ app.put('/api/admin/settings', adminAuth, masterAuth, async (req, res) => {
 app.put('/api/admin/settings/decorations', adminAuth, masterAuth, async (req, res) => { try { await AppSettings.findOneAndUpdate({}, { decorationType: req.body.decorationType, decorationCustomUrl: req.body.decorationCustomUrl, isDecorationActive: req.body.isDecorationActive }); res.json({ message: 'تم' }); } catch(e) { res.status(500).json({ message: 'خطأ' }); } });
 app.put('/api/admin/settings/terms', adminAuth, masterAuth, async (req, res) => { try { await AppSettings.findOneAndUpdate({}, { termsText: req.body.termsText }); res.json({ message: 'تم التحديث' }); } catch(e) { res.status(500).json({ message: 'خطأ' }); } });
 
-// 🛡️ التعديل الجديد في مسار تغيير الباسوورد ليدعم كلمتين 🛡️
+// 🛡️ مسار تغيير الباسوورد ليدعم كلمتين 🛡️
 app.post('/api/admin/change-password', adminAuth, masterAuth, async (req, res) => { 
     try { 
         const settings = await AppSettings.findOne(); 
-        const { oldPass, newPass, passType } = req.body; // passType: 'master' أو 'support'
+        const { oldPass, newPass, passType } = req.body; 
         
         let isValid = false; 
         if(settings && settings.adminPasswordHash) { isValid = await bcrypt.compare(oldPass, settings.adminPasswordHash); } else { isValid = (oldPass === (process.env.ADMIN_PASS || 'BomaAdmin2026')); } 
@@ -249,7 +254,7 @@ app.post('/api/admin/change-password', adminAuth, masterAuth, async (req, res) =
         
         if (passType === 'support') {
             if (!newPass || newPass.trim() === '') {
-                settings.supportPasswordHash = ''; // تعطيل كلمة مرور الدعم الفني
+                settings.supportPasswordHash = ''; 
             } else {
                 settings.supportPasswordHash = await bcrypt.hash(newPass, 10); 
             }
@@ -264,7 +269,7 @@ app.post('/api/admin/change-password', adminAuth, masterAuth, async (req, res) =
 
 app.post('/api/admin/forgot-password', async (req, res) => { try { const settings = await AppSettings.findOne(); const targetEmail = settings.adminEmail || process.env.ADMIN_EMAIL || 'admin@boma.com'; if(req.body.email !== targetEmail) { return res.status(400).json({ message: 'بريد غير مصرح للإدارة' }); } const tempPass = 'Admin' + crypto.randomInt(1000, 10000); settings.adminPasswordHash = await bcrypt.hash(tempPass, 10); await settings.save(); if(process.env.SMTP_USER) { transporter.sendMail({ from: `"أمان الإدارة" <${process.env.SMTP_USER}>`, to: targetEmail, subject: 'استعادة كلمة مرور الإدارة', html: `<h3>كلمة المرور المؤقتة هي:</h3><h1>${tempPass}</h1>` }).catch(()=>{}); } res.json({ message: 'تم الإرسال' }); } catch(e) { res.status(500).json({ message: 'خطأ' }); } });
 
-// 🛡️ التعديل الجديد في لوحة الإحصائيات لإرجاع الدور (Role) وحجب المال عن الدعم 🛡️
+// 🛡️ لوحة الإحصائيات مع إرجاع الدور (Role) وحجب المال عن الدعم 🛡️
 app.get('/api/admin/stats', adminAuth, async (req, res) => { 
     try { 
         const usersCount = await User.countDocuments() || 0; 
@@ -273,7 +278,6 @@ app.get('/api/admin/stats', adminAuth, async (req, res) => {
         
         let responseData = { usersCount, pendingOrders, pendingTickets, role: req.adminRole };
 
-        // إذا كان الداخل هو "المدير الرئيسي"، أرسل له الأموال
         if (req.adminRole === 'master') {
             const pendingDeposits = await FinanceRequest.countDocuments({ type: 'deposit', status: 'pending' }) || 0;
             const pendingWithdraws = await FinanceRequest.countDocuments({ type: 'withdraw', status: 'pending' }) || 0;
