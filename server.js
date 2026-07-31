@@ -611,8 +611,9 @@ app.post('/api/wallet/deposit-auto', auth, async (req, res) => {
             await collectSystemFee(fee, `رسوم شحن آلي لمحفظة ${user.fullName}`, txnIdStr);
             return res.status(201).json({ message: 'تم شحن المحفظة فوراً بنجاح! ⚡', newBalance: user.balance - user.frozenBalance });
         } else {
+            // 🛡️ التعديل: حفظ صورة الإيصال المرفوعة (Base64) في الطلب للمراجعة اليدوية 
             await new FinanceRequest({ clientIdentity: user.identity, type: 'deposit', amount: amount, bankTxnId: transactionId, receipt: req.body.receipt || '', status: 'pending' }).save(); 
-            return res.status(201).json({ message: 'لم يتم العثور على الإشعار البنكي الآلي. تم تحويل الطلب لطلبات التغذية اليدوية وسنقوم بتأكيده قريباً.' }); 
+            return res.status(201).json({ message: 'لم يتم العثور على الإشعار البنكي الآلي. تم تحويل الطلب مع صورة الإيصال للمراجعة اليدوية وسنقوم بتأكيده قريباً.' }); 
         }
     } catch (e) { res.status(500).json({ message: 'خطأ في النظام' }); } 
 });
